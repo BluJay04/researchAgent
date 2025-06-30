@@ -39,3 +39,7 @@ research_db/
 
 # Ignore API keys and secrets
 secrets.*
+
+# Ignore downloaded research papers
+papers/
+!papers/*.md
