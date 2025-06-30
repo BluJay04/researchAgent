@@ -20,13 +20,12 @@ class ResearchToolkit:
     def get_all_tools(self) -> List[Tool]:
         """Return all available research tools"""
         return [
-            self._create_semantic_search_tool(),
             self._create_arxiv_search_tool(),
+            self._create_method_search_tool(),
+            self._create_semantic_search_tool(),
             self._create_semantic_scholar_tool(),
             self._create_citation_analysis_tool(),
             self._create_similar_papers_tool(),
-            self._create_methods_datasets_search_tool(),
-            self._create_paper_analysis_tool(),
             self._create_database_stats_tool()
         ]
     
@@ -64,7 +63,7 @@ class ResearchToolkit:
         )
     
     def _create_arxiv_search_tool(self) -> Tool:
-        """Enhanced ArXiv search with automatic storage"""
+        """ArXiv search by keywords with automatic storage"""
         async def arxiv_search(query: str) -> str:
             try:
                 search = ar.Search(
@@ -121,7 +120,31 @@ class ResearchToolkit:
         return Tool(
             name="arxiv_search",
             func=lambda query: asyncio.run(arxiv_search(query)),
-            description="Search ArXiv for papers and automatically store them with extracted methods and datasets."
+            description="Search ArXiv for papers by keywords and automatically store them."
+        )
+
+    def _create_method_search_tool(self) -> Tool:
+        """Tool for searching by method name only"""
+        async def search_by_method(method_query: str) -> str:
+            try:
+                results = await self.db_manager.search_methods_datasets(
+                    method_query, "method", n_results=10
+                )
+                if not results:
+                    return f"No methods found for query: {method_query}"
+                output = [f"🔬 Method Search Results for: {method_query}\n"]
+                for i, result in enumerate(results, 1):
+                    output.append(f"{i}. {result['content']} ({result['type']})")
+                    output.append(f"   Paper: {result['paper_title']}")
+                    output.append(f"   Similarity: {result['similarity_score']:.3f}")
+                    output.append("")
+                return "\n".join(output)
+            except Exception as e:
+                return f"Error searching methods: {str(e)}"
+        return Tool(
+            name="search_by_method",
+            func=lambda method_query: asyncio.run(search_by_method(method_query)),
+            description="Search for papers by method name only."
         )
     
     def _create_semantic_scholar_tool(self) -> Tool:
@@ -301,44 +324,6 @@ class ResearchToolkit:
             name="search_methods_datasets",
             func=lambda query_type: asyncio.run(search_methods_datasets(*query_type.split("|"))),
             description="Search for specific methods or datasets. Format: 'query|type' where type is 'method', 'dataset', or 'both'."
-        )
-    
-    def _create_paper_analysis_tool(self) -> Tool:
-        """Tool for detailed paper analysis"""
-        async def analyze_paper(paper_title: str) -> str:
-            try:
-                paper = await self.db_manager.get_paper_by_title(paper_title)
-                if not paper:
-                    return f"Paper '{paper_title}' not found in database."
-                
-                # Get comprehensive analysis
-                analysis = await self.analyzer.comprehensive_analysis(
-                    paper['title'], paper['abstract']
-                )
-                
-                output = [f"📊 Comprehensive Analysis: {paper_title}\n"]
-                
-                output.append(f"Methods Identified: {', '.join(analysis.get('methods', []))}")
-                output.append(f"Datasets Identified: {', '.join(analysis.get('datasets', []))}")
-                output.append(f"Keywords: {', '.join(analysis.get('keywords', []))}")
-                output.append(f"Research Domain: {analysis.get('domain', 'Unknown')}")
-                output.append(f"Methodology Type: {analysis.get('methodology_type', 'Unknown')}")
-                output.append(f"Contribution Type: {analysis.get('contribution_type', 'Unknown')}")
-                
-                if analysis.get('strengths'):
-                    output.append(f"Strengths: {', '.join(analysis['strengths'])}")
-                if analysis.get('limitations'):
-                    output.append(f"Limitations: {', '.join(analysis['limitations'])}")
-                
-                return "\n".join(output)
-                
-            except Exception as e:
-                return f"Error analyzing paper: {str(e)}"
-        
-        return Tool(
-            name="analyze_paper",
-            func=lambda paper_title: asyncio.run(analyze_paper(paper_title)),
-            description="Perform comprehensive analysis of a paper including methods, datasets, and research characteristics."
         )
     
     def _create_database_stats_tool(self) -> Tool:

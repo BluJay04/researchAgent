@@ -4,9 +4,6 @@ __pycache__/
 *.pyo
 *.pyd
 
-# C extensions
-*.so
-
 # Distribution / packaging
 .Python
 env/
@@ -24,26 +21,11 @@ pip-wheel-metadata/
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-
-# Jupyter Notebook checkpoints
-.ipynb_checkpoints
-
 # Environment variables
 .env
 .env.*
 *.env
+!.example.env
 
 # VS Code settings
 .vscode/
@@ -54,27 +36,6 @@ coverage.xml
 # Research DB artifacts
 research_db/
 !research_db/*.md
-
-# OS files
-.DS_Store
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# Logs
-*.log
-
-# Backup files
-*~
-*.bak
-*.swp
-*.swo
-
-# Node modules (if any frontend work)
-node_modules/
-
-# HTML build artifacts
-*.html
 
 # Ignore API keys and secrets
 secrets.*
